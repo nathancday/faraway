@@ -44,12 +44,23 @@ summary(m)
 # Hydrogen Sulfide and Lactic Acid
 
 log(100) # natural log
-exp(4.60517) # use to revert
+exp(log(100)) # use to revert
 delog_m <- update(m, . ~ exp(Acetic) + exp(H2S) + Lactic)
 summary(delog_m)
 # now only Lactic Acid if signif at 5%
 
-# f-tests are used to access variation (expected / un-expecte) in a model
+# f-tests are used to access variation (expected / un-expected) in a model
 anova(m, delog_m)
-# there is less risidual variance in the log model
+# there is less risidual variance in the log model (m)
 
+(coef(m)[3] * .01) # 0.03911841 increase in taste
+?cheddar
+
+test_df <- data.frame(Acetic = rep(mean(cheddar$Acetic),2),
+                      H2S = mean(cheddar$Acetic) + c(0,.01),
+                      Lactic = mean(cheddar$Lactic) ) 
+predict(m, test_df) # confirmed
+
+(coef(m)[3] + .01) / coef(delog_m)[3] # 5100% percent increase to match
+
+exp(.01) # a 1 point increase in the unlogged scale
