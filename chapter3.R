@@ -64,3 +64,31 @@ predict(m, test_df) # confirmed
 (coef(m)[3] + .01) / coef(delog_m)[3] # 5100% percent increase to match
 
 exp(.01) # a 1 point increase in the unlogged scale
+
+## * teengam ----------
+?teengamb
+summary(teengamb)
+
+m <- lm(gamble ~ ., data = teengamb)
+summary(m) # sex and income signif at 5% level
+
+# since the coefficient shows a -22.11 shift in gamble for an increase of 1 in sex
+# and females are code as 1, women gamble less than men
+
+# if you recode sex as a factor with the levels as c(female, male) 
+teengamb$sex %<>% factor(levels = c(1, 0))
+m <- lm(gamble ~ ., data = teengamb) # and refit
+summary(m) # then the coef changes sign
+
+m2 <- lm(gamble ~ income, data = teengamb)
+summary(m2)
+anova(m, m2) # larger model is significnaly better
+anova(m2, m) # order of anova doesn't matter
+
+# repeat case with gala example from booth
+data(gala)
+m0 <- lm(Species ~ ., gala)
+m <- update(m0, . ~ . - Endemics)
+m2 <- update(m, . ~ . - Area - Adjacent)
+anova(m, m2)
+anova(m2, m)
