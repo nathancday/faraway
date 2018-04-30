@@ -92,3 +92,6 @@ m <- update(m0, . ~ . - Endemics)
 m2 <- update(m, . ~ . - Area - Adjacent)
 anova(m, m2)
 anova(m2, m)
+
+
+

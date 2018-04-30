@@ -1,2 +1,3 @@
 # faraway
-exercises from Faraway's Linear Models in R
+
+Exercies from and functions inspired by **Linear Models with R** by Julian J. Faraway.
