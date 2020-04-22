@@ -6,17 +6,17 @@ output: html_document
 ---
 
 ```{r setup, message = F}
-knitr::opts_chunk$set(comment = NA)
+knitr::opts_chunk$set(comment = NA, message=F, warning=F)
 library(faraway)
 library(tidyverse)
 ```
 
-1. 
+# 1. 
 ```{r prostate}
-mod <- lm(lpsa ~ ., data = prostate)
+m <- lm(lpsa ~ ., data = prostate)
 ```
 
-a.
+## a.
 ```{r prostate_a}
 new_data <- data.frame(
     lcavol = 1.44692,
@@ -29,55 +29,55 @@ new_data <- data.frame(
     pgg45 = 15
 )
 
-predict(mod, new_data, interval = "confidence")
+predict(m, new_data, interval = "confidence")
 ```
 
-b.
+## b.
 ```{r prostate_b}
 new_data$age <- 20
 
-predict(mod, new_data, interval = "confidence")
+predict(m, new_data, interval = "confidence")
 ```
 
-c.
+## c.
 ```{r prostate_c}
-summary(mod)
-mod2 <- update(mod, . ~ lcavol + lweight + svi)
+summary(m)
+m2 <- update(m, . ~ lcavol + lweight + svi)
 
-predict(mod2, new_data, interval = "confidence")
+predict(m2, new_data, interval = "confidence")
 ```
 
 The CIs are narrower in the model with fewer predictors, because the original model had eight predictors to estimate, each with their own variance, and the revised model only contains a subset of three. Less predictors means less variance in the prediction esimate.
 
-2.
+# 2.
 ```{r teengamb}
-mod <- lm(gamble ~ ., data = teengamb)
+m <- lm(gamble ~ ., data = teengamb)
 ```
 
-a.
+##a.
 ```{r teengamb_a}
 avg_male <- filter(teengamb, sex == 0) %>%
     summarise_all(mean)
 
-predict(mod, avg_male, interval = "confidence")
+predict(m, avg_male, interval = "confidence")
 ```
 
-b. 
+##b. 
 ```{r teengamb_b}
 max_male <- filter(teengamb, sex == 0) %>%
     summarise_all(max)
 
-predict(mod, max_male, interval = "confidence")
+predict(m, max_male, interval = "confidence")
 ```
 
-c.
+## c.
 ```{r teengamb_c}
-sqrt_mod <- update(mod, sqrt(gamble) ~ .)
+sqrt_m <- update(m, sqrt(gamble) ~ .)
 
-predict(sqrt_mod, avg_male, interval = "confidence")^2
+predict(sqrt_m, avg_male, interval = "confidence")^2
 ```
 
-d.
+## d.
 ```{r}
 hypothetical_female <- data.frame(
     sex = 1,
@@ -86,14 +86,14 @@ hypothetical_female <- data.frame(
     verbal = 10
 )
 
-predict(sqrt_mod, hypothetical_female, interval = 'confidence')^2
+predict(sqrt_m, hypothetical_female, interval = 'confidence')^2
 ```
 
 The square root transformation causes odd results when squaring the prediction results, as the 'upper' bound is actually less than the 'lower' bound.
 
 Aside from that the data of `hypothetical_female` is outside of the range of the model input data for both `income` and `verbal`. Cases when predictions are made on data points outside of the original data modeled, are an example of quantatative extrapolation and are dangerous because we must assume the same trends apply to these far different observations.
 
-3.
+# 3.
 
 a.
 ```{r snails_a}
@@ -102,47 +102,47 @@ xtabs(water ~ ., data = snail) / 4 # four snails
 
 No this represents the average individual snail only at specific humidity and tempertaure values. To estimate values not in this table a linear model for the entire dataset is needed.
 
-b.
+## b.
 ```{r snails_b}
-mod <- lm(water ~ ., data = snail)
+m <- lm(water ~ ., data = snail)
 
 new_condition <- data.frame(
     temp = 25,
     humid = 60
 )
 
-predict(mod, new_condition)
+predict(m, new_condition)
 ```
 
-c.
+## c.
 ```{r snails_c}
 newest_condition <- data.frame(
     temp = 30,
     humid = 75
 )
 
-predict(mod, newest_condition)
+predict(m, newest_condition)
 ```
 
 Water content of snails increases with humidity and decreases slightly wiht tempearute. These two predictions show a 15% increase in humidity more than compenstates for a 5C decrease in temperature.
 
 These predictions have equal merit, both sets of predictor values are within the modeled data's range.
 
-d.
+## d.
 ```{r snail_d}
 intercept_data <- data.frame(
     humid = 0,
     temp = 0
     )
 
-predict(mod, intercept_data)
+predict(m, intercept_data)
 
 intercept_data2 <- data.frame(
     humid = 100,
     temp = 256.4103
     )
 
-predict(mod, intercept_data2) # close
+predict(m, intercept_data2) # close
 ```
 
 Since the linear model is, `y = intercept + (b1 * x1) + (b2 * x2)`, using 0 for both coefficients, `b`'s would return just the intercept.
@@ -151,11 +151,10 @@ You can use alegbra to figure out another pair of equivilant predictors. As I se
 
 Neither of these solutions is very usefuly because it s unlikely they would be encountered on Earth. When predicting from a linear model care should be exercised for new data far removed from that used to construct the model. Also always consider domain knowledge, like temperature required for snails to survive (256F is ridiculous), when drawing conclusions from any model predictions.
 
-4. 
+# 4. 
 ```{r mdeaths_error, error=T}
 data(mdeaths) # error: data set ‘mdeaths’ not found
 ```
-
 Because its a timeseries, `ts`, :(
 
 ```{r mdeaths}
@@ -164,7 +163,7 @@ class(mdeaths)
 ```
 
 
-a.
+## a.
 ```{r mdeaths_a}
 plot(mdeaths)
 ```
@@ -185,44 +184,46 @@ ggplot(mdeaths_df, aes(month, deaths, color = year, group = year)) +
 
 Yea January has the most adult deaths of any month.
 
-b.
+## b.
 ```{r mdeaths_b}
 lag_df <- embed(mdeaths, 14) %>%
     as.data.frame() %>% 
     setNames(c("y", paste0("lag_", 1:13)))
 
-ar_mod <- lm(y ~ lag_1 + lag_12 + lag_13, data = lag_df)
+ar_m <- lm(y ~ lag_1 + lag_12 + lag_13, data = lag_df)
 
-summary(ar_mod)
+summary(ar_m)
 ```
 
-No the `lag_1` (barely ~.065) and `lag_13` predictors are not significant at an alpha level of .05.
+No the `lag_1` (barely ~.065) and `lag_13` predictors are not significant at the common alpha level of .05.
 
-c.
+## c.
+
+The last value in this dataset in December 1979.
 ```{r mdeaths_c}
 last_obs <- lag_df[nrow(lag_df), ]
 new_data <- data.frame(lag_1 = last_obs$y,
                        lag_12 = last_obs$lag_11,
                        lag_13 = last_obs$lag_12)
 
-jan_1980 <- predict(ar_mod, new_data, interval = "prediction")
+jan_1980 <- predict(ar_m, new_data, interval = "prediction")
 jan_1980
 ```
 
-d.
+b.
 ```{r medeaths_d}
-newer_data <- data.frame(lag_1 = jan_1980["fit"],
+newer_data <- data.frame(lag_1 = jan_1980[1],
                          lag_12 = last_obs$lag_10,
                          lag_13 = last_obs$lag_11)
 
-feb_1980 <- predict(ar_mod, newer_data, interval = "prediction")
+feb_1980 <- predict(ar_m, newer_data, interval = "prediction")
 feb_1980
 ```
 
 e.
 ```{r}
 fit_results <- data.frame(obs = lag_df$y,
-                          fitted = ar_mod$fitted.values,
+                          fitted = ar_m$fitted.values,
                           month = rep_len(month.abb[c(2:12, 1)], nrow(lag_df))) # predictions start in February
 
 ggplot(fit_results, aes(obs, fitted)) +
@@ -240,4 +241,64 @@ fit_results %>%
     summarise(avg_ape = mean(ape)) %>%
     arrange(avg_ape)
 ```
+
+# 5 
+
+```{r}
+# drop to the 14 columns used in the "full" model used in the Chapter
+fat <-  select(fat, age, weight, height, neck, chest,
+                abdom, hip, thigh, knee, ankle, 
+                biceps, forearm, wrist, brozek)
+
+library(skimr)
+skim(fat)
+m <- lm(brozek ~ age + weight + height + abdom, fat)
+```
+
+
+## a
+
+```{r}
+full_m <- lm(brozek ~ ., fat)
+anova(m, full_m)
+```
+
+No, the smaller model is significantly worse.
+
+## b. 
+
+```{r}
+median_dat <- summarise_all(fat, median)
+
+predict(m, newdata = median_dat, interval = "prediction")
+
+predict(full_m, newdata = median_dat, interval = "prediction")
+```
+
+The ranges are almost identical so we don't lose a lot of predictive power with the smaller version.
+
+## c.
+
+Let's just look at all of the cases...
+
+```{r}
+m$model %>% 
+    as.data.frame() %>% 
+    add_rownames("case_id") %>% 
+    pivot_longer(-case_id) %>% 
+    ggplot(aes(name, value, label = case_id)) +
+    geom_text()
+```
+
+Let's consider 39 and 42 to be the outliers.
+
+## d.
+
+```{r}
+update(m, data = fat[c(-39, -42), ]) %>% 
+    predict(median_dat, interval = "prediction")
+```
+
+Dropping the outliers doesn't change things a whole lot.
+
 
