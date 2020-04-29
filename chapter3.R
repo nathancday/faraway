@@ -1,4 +1,5 @@
 library(faraway)
+library(skimr)
 library(magrittr)
 library(tidyverse)
 
@@ -7,19 +8,19 @@ library(tidyverse)
 ## * Prostate ----------------------------------
 data(prostate)
 summary(prostate)
-m_prostate <- lm(lpsa ~ ., data = prostate)
-confint(m_prostate, c("age"), .95)
-confint(m_prostate, c("age"), .90)
+m <- lm(lpsa ~ ., data = prostate)
+confint(m, c("age"), .95)
+confint(m, c("age"), .90)
 # age is negatively correlated with lpsa with 90% conficence, but not with 95%
 
 library(ellipse)
-plot(ellipse(m_prostate, 3:4), type = "l")
-points(coef(m_prostate)[3], coef(m_prostate)[4], pch = 1)
+plot(ellipse(m, 3:4), type = "l")
+points(coef(m)[3], coef(m)[4], pch = 1)
 # since the origin is outside of the elipse we reject joint hypothesis age + lweight = 0
 # since 0 is outside of the x dimension, we can regect lweight = 0
 # we can't reject age = 0, since 0 is in the y dimension
 
-ts <- m_prostate %>% summary() %>% coef()%>% .[4,]
+ts <- m %>% summary() %>% coef()%>% .[4,]
 nreps <- 10000
 t_stats <- numeric(nreps)
 for ( i in 1:nreps ) {
@@ -51,13 +52,14 @@ summary(delog_m)
 
 # f-tests are used to access variation (expected / un-expected) in a model
 anova(m, delog_m)
-# there is less risidual variance in the log model (m)
+# there is less risidual variance in the log model (m), but we don't have any
+# degrees of freedom left so we can't estimate the F-statistic
 
 (coef(m)[3] * .01) # 0.03911841 increase in taste
 ?cheddar
 
 test_df <- data.frame(Acetic = rep(mean(cheddar$Acetic),2),
-                      H2S = mean(cheddar$Acetic) + c(0,.01),
+                      H2S = mean(cheddar$H2S) + c(0,.01),
                       Lactic = mean(cheddar$Lactic) ) 
 predict(m, test_df) # confirmed
 
@@ -67,16 +69,17 @@ exp(.01) # a 1 point increase in the unlogged scale
 
 ## * teengam ----------
 ?teengamb
-summary(teengamb)
+skim(teengamb)
 
 m <- lm(gamble ~ ., data = teengamb)
-summary(m) # sex and income signif at 5% level
+summary(m)
+# sex and income signif at 5% level
 
 # since the coefficient shows a -22.11 shift in gamble for an increase of 1 in sex
 # and females are code as 1, women gamble less than men
 
 # if you recode sex as a factor with the levels as c(female, male) 
-teengamb$sex %<>% factor(levels = c(1, 0))
+teengamb$sex %<>% fct_rev()
 m <- lm(gamble ~ ., data = teengamb) # and refit
 summary(m) # then the coef changes sign
 

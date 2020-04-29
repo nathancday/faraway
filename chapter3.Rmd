@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=TRUE, message=F}
-knitr::opts_chunk$set(comment = NA)
+knitr::opts_chunk$set(comment = NA, message=F, warning=F)
 library(faraway)
 library(tidyverse)
 ```
@@ -18,22 +18,22 @@ a. Compute 90 and 95% CIs for the parameter associated with `age`. Using just th
 ```{r prostate_a}
 data(prostate) # from library(faraway)
 
-m_prostate <- lm(lpsa ~ ., data = prostate)
-summary(m_prostate)
+m <- lm(lpsa ~ ., data = prostate)
+summary(m)
 
-confint(m_prostate, c("age"), .95)
-confint(m_prostate, c("age"), .90)
+confint(m, c("age"), .95)
+confint(m, c("age"), .90)
 ```
 Based on the confidence intervals `age` is on the border for being considered significant. Because the 90% CI doesn't include 0, `age` is signficant at that level, but the upper bound of the more stringent 95% CI stretches just over zero to 0.0025. The regression sumamry confirms this by returning a p-value of 0.08, close but above the common 0.05 threshold for significance.
    
-b. Computer and display a 95% joint confidence region for the parameters associated with `age` and `lbph`. Plot the origin on this display. The location of the origin on the display tells us the outcome for a certain hypothesis test. State that test and its outcome.
+b. Compute and display a 95% joint confidence region for the parameters associated with `age` and `lbph`. Plot the origin on this display. The location of the origin on the display tells us the outcome for a certain hypothesis test. State that test and its outcome.
 
 ```{r prostate_b}
 library(ellipse)
-plot(ellipse(m_prostate, c('age', 'lbph')), type = "l")
+plot(ellipse(m, c('age', 'lbph')), type = "l")
 points(0, 0, pch = 1)
-abline(v= confint(m_prostate)['age',], lty = 2)
-abline(h= confint(m_prostate)['lbph',], lty = 2)
+abline(v= confint(m)['age',], lty = 2)
+abline(h= confint(m)['lbph',], lty = 2)
 ```
 
 The joint null hypothesis `age = lbph = 0`, can not be rejected because the origin lies inside of the confidence region ellipse. Similarly the null hypothesis `age = 0` can not be rejected becasue 0 lies with the 95% confidence bounds and the same is true for the null hypothesis `lbph = 0`.
@@ -41,7 +41,7 @@ The joint null hypothesis `age = lbph = 0`, can not be rejected because the orig
 c. In the test, we made a permutation test corresponding to the F-test for the significant of all the predictors. Execute the permutation test corresponding to the t-test for age in the model. (Hint: `summary(g)$coef[4,3]` gets your the t-statistic you need if the model is called `g`)
 
 ```{r prostate_c}
-t_value <- summary(m_prostate) %>% coef() %>% .['age', 't value']
+t_value <- summary(m) %>% coef() %>% .['age', 't value']
 
 # function to permutate n-times
 permute_tmod <- function(nsims) {
@@ -63,12 +63,12 @@ From section a above we not know the p-value for `age` is 0.08229, and we can se
 d. Remove all the predictors that are not significant at the 5% level. Test this model against the original model. Which model is preffered?
 
 ```{r prostate_d}
-m2_prostate <- update(m_prostate, . ~ lcavol + lweight + svi)
+m2 <- update(m, . ~ lcavol + lweight + svi)
 
-anova(m_prostate, m2_prostate)
+anova(m, m2)
 ```
 
-The reduced model is not significantly better than the full model so we would choose `m_prostate` over `m2_prostate`.
+The reduced model is not significantly better than the full model so we would choose `m` over `m2`.
 
 #### 2. Thirty samples of c
 
