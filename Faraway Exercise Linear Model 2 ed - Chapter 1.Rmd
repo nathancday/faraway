@@ -1,0 +1,181 @@
+---
+title: "Faraway -Linear Model - 2 ed - CHAPTER 1 "
+author: "Andrea Pierucci"
+date: "01 May 2020"
+output: html_document
+---
+1)
+
+```{r}
+library(faraway)
+attach(teengamb)                
+data(teengamb)
+head(teengamb)
+summary(teengamb)
+```
+
+Sex is a categorical variable
+
+```{r}
+teengamb$sex <-as.factor(teengamb$sex) 
+```
+
+A numerical summary divided by sex is useful for understanding patterns if present
+```{r}
+
+by(teengamb, teengamb$sex, summary)
+pairs(teengamb) 
+cor(teengamb[,-1])
+```
+We remove the qualitative variable were correlations cannot be evaluated. 
+
+Female 
+```{r}
+cor(teengamb[teengamb$sex==1,-1])  
+```
+Male
+```{R}
+cor(teengamb[teengamb$sex==0,-1]) 
+```
+
+Graphical summary 
+```{r}
+plot(gamble~sex, teengamb) 
+```
+We can identify outliers
+```{r}
+plot(income~sex)     
+plot(gamble~income, pch=unclass(sex))  
+
+```
+
+
+2)
+
+```{r}
+data(uswages)
+attach(uswages)                
+head(uswages)
+summary(uswages)
+```
+
+Change categorical variables
+
+```{r}
+uswages$race <-  as.factor(uswages$race) 
+uswages$smsa <-  as.factor(uswages$smsa) 
+uswages$ne <-  as.factor(uswages$ne) 
+uswages$mw <-  as.factor(uswages$mw) 
+uswages$so <-  as.factor(uswages$so) 
+uswages$we <-  as.factor(uswages$we) 
+uswages$pt <-  as.factor(uswages$pt) 
+```
+
+A numerical summary divided by race is useful for understanding patterns if present
+```{r}
+
+by(uswages, uswages$race, summary)
+pairs(uswages[,-c(4:10)]) 
+cor(uswages[,-c(4:10)])
+```
+We remove the qualitative variables were correlations cannot be evaluated. 
+
+Black 
+```{r}
+cor(uswages[uswages$race==1,-c(4:10)])  
+```
+White
+```{R}
+cor(uswages[uswages$race==0,-c(4:10)]) 
+```
+
+Graphical summary 
+```{r}
+plot(educ~race, uswages)
+plot(exper~race, uswages)
+plot(wage~race, uswages)
+
+```
+We can identify outliers
+```{r}
+    
+plot(wage~educ, pch=unclass(race)) 
+plot(wage~exper, pch=unclass(race)) 
+plot(educ~exper, pch=unclass(race)) 
+
+```
+
+3)
+```{r}
+data(prostate)
+attach(prostate)                
+head(prostate)
+summary(prostate)
+```
+
+Change categorical variables
+```{r}
+prostate$svi <-  as.factor(prostate$svi) 
+```
+A numerical summary divided by svi is useful for understanding patterns if present
+```{r}
+by(prostate, prostate$svi, summary)
+pairs(prostate[,-5]) 
+cor(prostate[,-5])
+```
+We remove the qualitative variables were correlations cannot be evaluated. 
+
+With seminal vesicle invasion 
+```{r}
+cor(prostate[prostate$svi==1,-5])  
+```
+Without seminal vesicle invasion 
+```{r}
+cor(prostate[prostate$svi==0,-5]) 
+```
+Graphical summary 
+```{r}
+plot(age~svi, prostate)
+plot(lweight~svi, prostate)
+plot(lweight~age, prostate)
+plot(lcavol~age, prostate)
+```
+
+4)
+```{r}
+data(sat)
+attach(sat)
+summary(sat)
+pairs(sat)
+cor(sat)
+```
+High correlation between salary vs expenditure, verbal vs math, verbal vs total, math vs total
+
+we can observe those strong correlation garaphically 
+```{r}
+plot(expend~salary)      
+plot(verbal~math)      
+plot(verbal~total)      
+plot(math~total)      
+```
+
+
+5)
+```{r}
+data(divusa)
+attach(divusa)
+head(divusa)
+```
+Numerical summary 
+```{r}
+summary(divusa)
+cor(divusa)
+```
+
+Graphical summary 
+```{r}
+pairs(divusa) 
+divusa$year<-as.character(divusa$year)
+plot(marriage~year,divusa)     
+plot(femlab~year,divusa) 
+```
