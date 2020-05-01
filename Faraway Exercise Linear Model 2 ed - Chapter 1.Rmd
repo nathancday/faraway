@@ -1,5 +1,5 @@
 ---
-title: "Faraway -Linear Model - 2 ed - CHAPTER 1 "
+title: "Faraway -Linear Model - 2 ed - Chapter 1 "
 author: "Andrea Pierucci"
 date: "01 May 2020"
 output: html_document
