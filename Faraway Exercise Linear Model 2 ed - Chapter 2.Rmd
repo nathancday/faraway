@@ -1,0 +1,258 @@
+---
+title: "Faraway -Linear Model - 2 ed - CHAPTER 2"
+author: "Andrea Pierucci"
+date: "09 maggio 2020"
+output: html_document
+---
+1)
+
+a)
+```{r}
+data(teengamb)
+
+mod<-lm(gamble~sex+status+income+verbal,teengamb)
+summary(mod)
+```
+b)
+```{r}
+sort((res<-mod$res)) 
+```
+The observation 24.
+
+c)
+```{r}
+mean(res)
+median(res)
+```
+
+d)
+```{r}
+(fit <- mod$fit)
+cor(res,fit)
+```
+
+e)
+```{r}
+cor(res,teengamb$income)
+```
+
+f)
+```{r}
+(mean_male <- filter(teengamb, sex == 0)%>%summarise_all(mean))
+(mean_female<- filter(teengamb, sex == 1)%>%summarise_all(mean))
+
+PM<-predict(mod, mean_male, interval = "confidence")
+PF<-predict(mod, mean_female, interval = "confidence")
+PM[,1]-PF[,1]
+```
+
+
+2) someting is trange ...
+
+# how is possible that Years of experience are negative like (-1 or -2)? Should I remove these negative values?
+```{r}
+data(uswages)
+sort(uswages$exper)
+
+modx<-lm(wage~educ+exper,uswages)
+summary(modx)
+
+modx2<-lm(log(wage)~educ+exper,uswages)
+summary(modx2)
+```
+
+Both models are very similar with a low R^2 ad Pvalue
+
+
+3) Natan, I'm not sure I really understood the question....
+```{r}
+(x <- 1:20)
+(y <- x+rnorm(20))
+
+lm(y ~ x + I(x^2))
+
+solve(crossprod(x,x),crossprod(x,y))
+```
+
+4)
+```{r}
+data(prostate)
+mod<-lm(lpsa~lcavol,prostate)
+summary(mod)
+mod_basic<-c(0.7875, 0.5394)
+```
+Residual standard error: 0.7875
+R-squared:  0.5394
+```{r}
+MODZ1<-lm(lpsa~lcavol+lweight,prostate)
+summary(MODZ1)
+MODZ1X<-c(0.7506,0.5859)
+
+MODZ2<-lm(lpsa~lcavol+lweight+svi,prostate)
+summary(MODZ2)
+MODZ2X<-c(0.7168,0.6264)
+
+MODZ3<-lm(lpsa~lcavol+lweight+svi+lbph,prostate)
+summary(MODZ3)
+MODZ3X<-c(0.7108,0.6366)
+
+MODZ4<-lm(lpsa~lcavol+lweight+svi+lbph+age,prostate)
+summary(MODZ4)
+MODZ4X<-c(0.7073, 0.6441)
+
+MODZ5<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp,prostate)
+summary(MODZ5)
+MODZ5X<-c( 0.7102, 0.6451)
+
+
+MODZ6<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp+pgg45,prostate)
+summary(MODZ6)
+MODZ6X<-c( 0.7048, 0.6544)
+
+
+MODZ7<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp+pgg45+gleason,prostate)
+summary(MODZ7)
+MODZ7X<-c( 0.7084, 0.6548)
+
+
+results<-rbind(mod_basic,MODZ1X,MODZ2X,MODZ3X,MODZ4X,MODZ5X,MODZ6X,MODZ7X)
+colnames(results)<-c("SE","R^2")
+results<-as.data.frame(results)
+class(results)
+results$model<-c(1:8)
+
+plot(results$SE,results$model) 
+plot(results$R^2,results$model) # R^2 obviusly increases with the more complex models. Probably ajusted R^2 is less subscetvily.
+```
+For SE does not change a lot after the 3th model, however R^2 obviusly increases with the rise of models' complexity. Probably ajusted R^2 has a less subscetvily.
+
+
+5)
+```{r}
+plot(prostate$lpsa,prostate$lcavol)
+mod1<-lm(lpsa~lcavol,prostate) 
+summary(mod1)
+mod2<-lm(lcavol~lpsa,prostate) 
+abline(-1.50730/0.71932,1/0.71932)
+abline(mod2)
+```
+
+I do not know how identify the intersection point coordinates . . 
+
+6)
+
+a)
+```{r}
+data(cheddar)
+(mod<-lm(taste~.,cheddar))
+```
+
+
+
+b)
+```{r}
+(res <- mod$res)
+(fit <- mod$fit)
+((cor(res,fit))^2)
+```
+Any where, but I probabky did some mistake.
+
+c)
+```{r}
+(mod2<-lm(taste~Acetic-1 + H2S + Lactic,cheddar))
+summary(mod2)
+```
+R-squared:  0.8877
+```{r}
+anova(mod,mod2)
+plot(mod)
+plot(mod2)
+```
+The mod medel have a better fit.
+
+d)
+```{r}
+(x<- model.matrix(~Acetic+H2S+Lactic,cheddar))
+(y <- cheddar$taste)
+qrx <- qr(x)
+(f <- t(qr.Q(qrx)) %*% y)
+backsolve(qr.R(qrx),f)
+```
+
+
+7)
+
+a)
+```{r}
+(x<- model.matrix(~x1+x2+x3+x4,wafer))
+
+```
+b)
+```{r}
+cor(x)
+
+```
+c)
+```{r}
+```
+d)
+```{r}
+mod4<-lm(resist ~ x1+x2+x3,wafer)
+summary(mod3)
+summary(mod4)
+```
+The SE remained the same bur the regression coefficient decrease without x4.
+
+e)
+```{r}
+```
+
+
+8)
+```{r}
+data(truck)
+head(truck)
+truck$B <- sapply(truck$B, function(x) ifelse(x=="-" ,-1,1))
+truck$C <- sapply(truck$C, function(x) ifelse(x=="-" ,-1,1))
+truck$D <- sapply(truck$D, function(x) ifelse(x=="-" ,-1,1))
+truck$E <- sapply(truck$E, function(x) ifelse(x=="-" ,-1,1))
+truck$O <- sapply(truck$O, function(x) ifelse(x=="-" ,-1,1))
+```
+
+a)
+```{r}
+(mod5<-lm(height~.,truck))
+```
+The coefficients are exactly the same.
+
+b)
+```{r}
+(mod6<-lm(height~B+C+D+E,truck))
+(x<-model.matrix(~.,truck))
+(x2<-model.matrix(~B+C+D+E,truck))
+```
+
+c)
+```{r}
+truck$A<-sum(truck$B+truck$C+truck$D+truck$E)
+(mod6<-lm(height~.,truck))
+```
+No, the coefficients of the new predictor A do not appear because are 0.
+
+d)
+```{r}
+(x <- model.matrix( ~ B + C + D + E + O,truck))
+(y <- truck$height)
+(xtxi <- solve(t(x) %*% x))
+```
+
+e)
+```{r}
+xtxi %*% t(x) %*% y
+
+```
+
+f)
+```{r}
+qr.coef(qr(x),y)
+```
