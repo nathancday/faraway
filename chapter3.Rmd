@@ -8,25 +8,29 @@ output: html_document
 ```{r setup, include=TRUE, message=F}
 knitr::opts_chunk$set(comment = NA, message=F, warning=F)
 library(faraway)
+library(skimr)
 library(tidyverse)
 ```
 
-#### 1. For the `prostate` data, fit a model with `lpsa` as the response and the other variables as predictors:
+# 1.
+For the `prostate` data, fit a model with `lpsa` as the response and the other variables as predictors:
 
-a. Compute 90 and 95% CIs for the parameter associated with `age`. Using just these intervals what could we have deduced about the p-value for age in the regression summary?
+##a.
+Compute 90 and 95% CIs for the parameter associated with `age`. Using just these intervals what could we have deduced about the p-value for age in the regression summary?
 
 ```{r prostate_a}
 data(prostate) # from library(faraway)
 
 m <- lm(lpsa ~ ., data = prostate)
-summary(m)
+sumary(m)
 
-confint(m, c("age"), .95)
+confint(m, c("age")) # .95 is default
 confint(m, c("age"), .90)
 ```
 Based on the confidence intervals `age` is on the border for being considered significant. Because the 90% CI doesn't include 0, `age` is signficant at that level, but the upper bound of the more stringent 95% CI stretches just over zero to 0.0025. The regression sumamry confirms this by returning a p-value of 0.08, close but above the common 0.05 threshold for significance.
    
-b. Compute and display a 95% joint confidence region for the parameters associated with `age` and `lbph`. Plot the origin on this display. The location of the origin on the display tells us the outcome for a certain hypothesis test. State that test and its outcome.
+## b.
+Compute and display a 95% joint confidence region for the parameters associated with `age` and `lbph`. Plot the origin on this display. The location of the origin on the display tells us the outcome for a certain hypothesis test. State that test and its outcome.
 
 ```{r prostate_b}
 library(ellipse)
@@ -38,7 +42,8 @@ abline(h= confint(m)['lbph',], lty = 2)
 
 The joint null hypothesis `age = lbph = 0`, can not be rejected because the origin lies inside of the confidence region ellipse. Similarly the null hypothesis `age = 0` can not be rejected becasue 0 lies with the 95% confidence bounds and the same is true for the null hypothesis `lbph = 0`.
    
-c. In the test, we made a permutation test corresponding to the F-test for the significant of all the predictors. Execute the permutation test corresponding to the t-test for age in the model. (Hint: `summary(g)$coef[4,3]` gets your the t-statistic you need if the model is called `g`)
+## c.
+In the text, we made a permutation test corresponding to the F-test for the significant of all the predictors. Execute the permutation test corresponding to the t-test for age in the model. (Hint: `summary(g)$coef[4,3]` gets your the t-statistic you need if the model is called `g`)
 
 ```{r prostate_c}
 t_value <- summary(m) %>% coef() %>% .['age', 't value']
@@ -46,10 +51,10 @@ t_value <- summary(m) %>% coef() %>% .['age', 't value']
 # function to permutate n-times
 permute_tmod <- function(nsims) {
     map_dbl(1:nsims,
-            ~ lm(sample(lpsa) ~ ., data = prostate) %>%
+            ~ update(m, . ~ . - age + sample(age)) %>%
             summary() %>%
             coef() %>%
-            .['age', 't value'])
+            .['sample(age)', 't value'])
 }
 
 mean(abs(permute_tmod(100)) > abs(t_value))
@@ -57,10 +62,11 @@ mean(abs(permute_tmod(1000)) > abs(t_value))
 mean(abs(permute_tmod(10000)) > abs(t_value))
 ```
 
-From section a above we not know the p-value for `age` is 0.08229, and we can see the return value from the permutation getting closer to that number as the number of simulations increases.
+From section `a` above we know the p-value for `age` is 0.08229, and we can see the return value from the permutation getting closer to that number as the number of simulations increases.
 
 
-d. Remove all the predictors that are not significant at the 5% level. Test this model against the original model. Which model is preffered?
+## d.
+Remove all the predictors that are not significant at the 5% level. Test this model against the original model. Which model is preffered?
 
 ```{r prostate_d}
 m2 <- update(m, . ~ lcavol + lweight + svi)
@@ -70,5 +76,188 @@ anova(m, m2)
 
 The reduced model is not significantly better than the full model so we would choose `m` over `m2`.
 
-#### 2. Thirty samples of c
+# 2.
+
+```{r cheddar}
+data("cheddar")
+skim(cheddar)
+```
+
+## a.
+
+```{r cheddar_a}
+m <- lm(taste ~ ., cheddar)
+sumary(m)
+```
+
+Hydrogen sulfide (H2S) and lactic acid (Lactic) are both signifcant at the 5% level.
+
+## b.
+
+```{r cheddar_b}
+m2 <- lm(taste ~ exp(H2S) + exp(Acetic) + Lactic, cheddar)
+sumary(m2)
+```
+
+Now acetic acid and lactic acid are significant at the 5% level.
+
+## c.
+
+```{r cheddar_c}
+anova(m, m2)
+```
+
+Using an F-test here doesn't make sense because the models being compared are not nested. They do contain the same predictor variables, but because of the transformations they are different values.
+
+R is smart and doesn't even report an F statistic to help us stay out of trouble. Based on the residual error, we'd prefer `m` with the logged predictors.
+
+## d.
+
+```{r cheddar_d}
+summary(m) %>% coef() %>% .["H2S", "Estimate"] %>% {. * 0.01}
+```
+
+Taste score would increase by 0.039, not a long cosider the range is `r range(cheddar$taste).`
+
+## e.
+
+```{r cheddar_e}
+(exp(.01) - 1) %>% scales::percent()
+```
+
+# 3.
+
+```{r}
+data("teengamb")
+skim(teengamb)
+m <- lm(gamble ~ ., teengamb)
+```
+
+## a. 
+
+```{r}
+sumary(m)
+```
+
+Sex and income are both significant predictors are the 5% level, status is close.
+
+## b. 
+
+Males are encoded as 0's so the coefficient for sex is showing the change when the value is 1 (female). So the model estimates al typica female specnds 22 pounds less per year on gambling than a typical male.
+
+```{r}
+m2 <- update(m, . ~ income)
+anova(m, m2)
+```
+
+The smaller model (income only) is significantly better than the full model.
+
+# 4.
+
+```{r}
+data("sat")
+skim(sat)
+```
+
+## a.
+
+```{r}
+m <- lm(total ~ expend + ratio + salary, sat)
+
+m2 <- update(m, . ~ . - salary)
+anova(m, m2)
+
+m3 <- update(m, . ~ 1)
+anova(m, m3)
+```
+
+No, at least not at the common 5% significance level.
+
+Note we could just inspect the `PR(.|t|)` value directly in the results from `sumary(m)` instead of fitting `m2`, because those values are showing the significance of adding a given predictor to a model that already contains all of the other predictors.
+
+## b.
+
+```{r}
+m4 <- update(m, . ~ . + takers)
+summary(m4)
+anova(m, m4)
+```
+
+See note above.
+
+# 5.
+
+See this great [video on YouTube](https://www.youtube.com/watch?v=Bs1koG5U2QU).
+
+If we use $\omega$ to represent the smaller (nested) model and $\Omega$ to represent the larger (full) model:
+
+$\frac{(R^2\Omega - R^2\omega) / (p-1)}{(1 - R^2\Omega) / df\Omega}$
+
+Where `df` indicates the degress of freedom.
+
+# 6.
+
+```{r}
+data("happy")
+skim(happy)
+m <- lm(happy ~ ., happy)
+```
+
+## a. 
+
+```{r}
+sumary(m)
+```
+
+Only love is a siginificant predictor at the 1% level.
+
+## b.
+
+```{r}
+permute_tmod <- function(nsims) {
+    map_dbl(1:nsims,
+            ~ update(m, . ~ . - money + sample(money)) %>%
+            summary() %>%
+            coef() %>%
+            .['sample(money)', 't value'])
+}
+
+tvals <- permute_tmod(1000)
+
+hist(tvals, freq = FALSE)
+```
+
+## d.
+
+```{r}
+xrange <- seq(-3,3, length.out = 200)
+
+hist(tvals, freq = FALSE)
+lines(x = xrange, y = dt(xrange, 34))
+```
+
+## e.
+
+```{r}
+boot_sim <- function(nsims) {
+    map_dbl(1:nsims, 
+        ~ update(m, . + sample(resid(m), replace = TRUE) ~ .) %>% 
+            coef() %>% 
+            .["money"]
+    )
+}
+
+money_coefs <- boot_sim(1000)
+
+quantile(money_coefs, c(.05, .95)) # 90% confidence
+quantile(money_coefs, c(.0275, .9725)) # 95% 
+```
+
+Neigther the 90% or the 95% confidence interval from the boot strap method include zero. So we can conclude the money predictor is significant at the 5% level.
+
+Note, the 95% confidence interval will always be larger than the 90%, so we could have checked 95% first and skipped checking 90%, because if 95% did not include zero then we know that 90% wouldn't include it.
+
+# 7.
+
+
 
