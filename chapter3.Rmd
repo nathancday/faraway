@@ -259,5 +259,93 @@ Note, the 95% confidence interval will always be larger than the 90%, so we coul
 
 # 7.
 
+```{r}
+data("punting")
+skim(punting)
+```
 
+## a.
 
+```{r}
+m <- lm(Distance ~ RStr + LStr + RFlex + LFlex, punting)
+sumary(m)
+```
+
+None of them!
+
+## b. 
+
+```{r}
+m0 <- lm(Distance ~ 1, punting)
+anova(m0, m)
+```
+
+Yes, there is a relationship. The predictors make for a significantly better model of `Distance`.
+
+## c.
+
+Examined independently the strength predictors both have a positive relationship with distance, even if `RStr` has a larger estimate. (maybe most punters in the data are right footed?)
+
+```{r}
+m_rstr <- update(m, . ~ . -LStr)
+sumary(m_rstr)
+
+m_lstr <- update(m, . ~ . -RStr)
+sumary(m_lstr)
+```
+
+Looking at the full model in "a" we see opposite signs for the estimates, because the predictors are [colinear](https://en.wikipedia.org/wiki/Multicollinearity). See this awesome answer on [CrossValidated](https://stats.stackexchange.com/questions/3549/why-is-it-possible-to-get-significant-f-statistic-p-001-but-non-significant-r/14528#14528) for more.
+
+```{r}
+ggplot(punting, aes(RStr, LStr)) +
+    geom_point()
+```
+
+## d. 
+
+```{r}
+plot(ellipse(m, c(2,3)), type = "l")
+points(coef(m)[2], coef(m)[3])
+abline(v = confint(m)[2,])
+abline(h = confint(m)[3,])
+```
+
+The joint confidence region includes the origin, and both individual intervals include zero. Since these are 95% confidence intervals, if an interval does not include zero, then that predictors would be called significant at the 5% level. If these were for 90% confidence, then it would be the 10% level.
+
+## e.
+
+```{r}
+m2 <- lm(Distance ~ I(RStr + LStr) + RFlex + LFlex, punting)
+anova(m, m2)
+```
+
+The null hypothesis can not be rejected, so using the simplified model is acceptable.
+
+## f.
+
+```{r}
+m_rflex <- update(m, . ~ . -LFlex)
+sumary(m_rflex)
+
+m_lflex <- update(m, . ~ . -RFlex)
+sumary(m_lflex)
+```
+
+Similar to "c" we see a larger estimate for the right left (right footed punters are more common), but both have the same direction of effect.
+
+## g.
+
+```{r}
+m_sym <- lm(Distance ~ I(RStr + LStr) + I(RFlex + LFlex), punting)
+anova(m_sym, m)
+```
+
+We can reject the null and used the simiplified model that combines the right and left variants of the predictors for strenght and flexibility.
+
+## h.
+
+```{r}
+h <- lm(Hang ~ RStr + LStr + RFlex + LFlex, punting)
+```
+
+No we can't use a test to compare the models, because they are fit on different outcome variables, so they are not nested.
