@@ -1,268 +1,323 @@
 ---
-title: "Faraway -Linear Model - 2 ed - CHAPTER 2"
-author: "Andrea Pierucci"
-date: "09 maggio 2020"
+title: "Chapter 2"
+author: "Nate"
+date: "5/9/2020"
 output: html_document
 ---
-1)
 
-a)
-```{r}
+```{r setup, message = F}
+knitr::opts_chunk$set(comment = NA, message=F, warning=F)
 library(faraway)
+library(skimr)
+library(magrittr)
 library(tidyverse)
-data(teengamb)
-
-mod<-lm(gamble~sex+status+income+verbal,teengamb)
-summary(mod)
 ```
-b)
-```{r}
-sort((res<-mod$res)) 
-```
-The observation 24.
 
-c)
-```{r}
+# 1. 
+```{r teengamb}
+skim(teengamb)
+m <- lm(gamble ~ ., teengamb)
+```
+
+## a.
+```{r teengamb_a}
+sumary(m)
+```
+
+53%, reported by **the coefficient of determination**, aka 'R-squared'.
+
+## b.
+```{r teengamb_b}
+res <- resid(m)
+
+which.max(res)
+```
+
+Case (row-number) 24 gambles more than the model expects.
+
+## c.
+```{r teengamb_c}
 mean(res)
 median(res)
 ```
 
-d)
-```{r}
-(fit <- mod$fit)
-cor(res,fit)
+The mean of the residuals should always be zero, we get this very-small (practically zero) value because of how computer math works. The median is a product of have only 47 cases, as more observations are collected the median will trend towards zero too.
+
+## d.
+
+```{r teengamb_d}
+predict(m) %>% cor(res)
 ```
 
-e)
-```{r}
-cor(res,teengamb$income)
+Again a practically zero value, indicating no correlation. This is means our linear model assumptions were not violated.
+
+## e.
+
+```{r teengamb_e}
+teengamb$income %>% cor(res)
 ```
 
-f)
-```{r}
-(mean_male <- filter(teengamb, sex == 0)%>%summarise_all(mean))
-(mean_female<- filter(teengamb, sex == 1)%>%summarise_all(mean))
+## f.
+```{r teengamb_f}
+?teengamb
+# 0 = male
+# gamb in pounds per year
 
-PM<-predict(mod, mean_male, interval = "confidence")
-PF<-predict(mod, mean_female, interval = "confidence")
-PM[,1]-PF[,1]
+sumary(m)
 ```
 
+An average female would spend 22 pounds less per year that an average male, if we consider status, income and verbal as nuissance variables.
 
-2) someting is trange ...
-
-# how is possible that Years of experience are negative like (-1 or -2)? Should I remove these negative values?
+# 2.
 ```{r}
-data(uswages)
-sort(uswages$exper)
+data("uswages")
+?uswages
+skim(uswages)
 
-modx<-lm(wage~educ+exper,uswages)
-summary(modx)
-
-modx2<-lm(log(wage)~educ+exper,uswages)
-summary(modx2)
+m <- lm(wage ~ educ + exper, uswages)
+sumary(m)
 ```
 
-Both models are very similar with a low R^2 ad Pvalue
+For every year of education the model estimates a \$51 per week increase in wage. For every year of experience the model esimates only \$10.
 
-
-3) Natan, I'm not sure I really understood the question....
-```{r}
-(x <- 1:20)
-(y <- x+rnorm(20))
-
-lm(y ~ x + I(x^2))
-
-solve(crossprod(x,x),crossprod(x,y))
+```{r log_wage}
+update(m, log(wage, 10) ~ .) %>% sumary()
 ```
 
-4)
-```{r}
-data(prostate)
-mod<-lm(lpsa~lcavol,prostate)
-summary(mod)
-mod_basic<-c(0.7875, 0.5394)
-```
-Residual standard error: 0.7875
-R-squared:  0.5394
-```{r}
-MODZ1<-lm(lpsa~lcavol+lweight,prostate)
-summary(MODZ1)
-MODZ1X<-c(0.7506,0.5859)
+Log transformation of the response, means we interpret the coefficients as magitude (multiplicative) changes. So for each year of education the model expects a 4% increase in wage. For each year of experience < 1%.
 
-MODZ2<-lm(lpsa~lcavol+lweight+svi,prostate)
-summary(MODZ2)
-MODZ2X<-c(0.7168,0.6264)
+# 3.
 
-MODZ3<-lm(lpsa~lcavol+lweight+svi+lbph,prostate)
-summary(MODZ3)
-MODZ3X<-c(0.7108,0.6366)
+```{r hand_calc}
+x <- 1:20
+y <- x + rnorm(20)
 
-MODZ4<-lm(lpsa~lcavol+lweight+svi+lbph+age,prostate)
-summary(MODZ4)
-MODZ4X<-c(0.7073, 0.6441)
+m <- lm(y ~ I(x^2))
+sumary(m)
 
-MODZ5<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp,prostate)
-summary(MODZ5)
-MODZ5X<-c( 0.7102, 0.6451)
+direct_calc <- function(x, y, degree = 2) {
+  x_mat <- model.matrix(~I(x^degree))
+  solve(crossprod(x_mat), crossprod(x_mat, y))
+}
 
+direct_calc(x, y)
 
-MODZ6<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp+pgg45,prostate)
-summary(MODZ6)
-MODZ6X<-c( 0.7048, 0.6544)
-
-
-MODZ7<-lm(lpsa~lcavol+lweight+svi+lbph+age+lcp+pgg45+gleason,prostate)
-summary(MODZ7)
-MODZ7X<-c( 0.7084, 0.6548)
-
-
-results<-rbind(mod_basic,MODZ1X,MODZ2X,MODZ3X,MODZ4X,MODZ5X,MODZ6X,MODZ7X)
-colnames(results)<-c("SE","R^2")
-results<-as.data.frame(results)
-class(results)
-results$model<-c(1:8)
-
-plot(results$SE,results$model) 
-plot(results$R^2,results$model) # R^2 obviusly increases with the more complex models. Probably ajusted R^2 is less subscetvily.
-```
-For SE does not change a lot after the 3th model, however R^2 obviusly increases with the rise of models' complexity. Probably ajusted R^2 has a less subscetvily.
-
-
-5)
-```{r}
-plot(prostate$lpsa,prostate$lcavol)
-mod1<-lm(lpsa~lcavol,prostate) 
-summary(mod1)
-mod2<-lm(lcavol~lpsa,prostate) 
-abline(-1.50730/0.71932,1/0.71932)
-abline(mod2)
+map(set_names(3:7), possibly(~ direct_calc(x, y, degree = .), "Error"))
 ```
 
-I do not know how identify the intersection point coordinates . . 
+# 4.
 
-6)
+```{r prostate}
+data("prostate")
+skim(prostate)
 
-a)
-```{r}
-data(cheddar)
-(mod<-lm(taste~.,cheddar))
+m <- lm(lpsa ~ lcavol, prostate)
+
+get_resid_error <- function(m) {
+  s <- invisible(summary(m))
+  data.frame(
+    "mod" = formula(m) %>% deparse(),
+    "sigma" = s$sigma,
+    "r_squared" = s$r.squared
+    )
+} 
+
+resid_error_dat <- get_resid_error(m)
+
+predictors_to_add <- c("lweight", "svi", "lbph", "age", "lcp", "pgg45", "gleason")
+
+for (p in predictors_to_add) {
+  f <- formula(m) %>% deparse() %>% paste("+", p)
+  m <- update(m, f)
+  
+  resid_error_dat <- bind_rows(resid_error_dat, get_resid_error(m))
+}
+
+resid_error_dat %>% 
+  pivot_longer(-mod, "key") %>% 
+  ggplot(aes(mod, value, color = key, group = key)) +
+  geom_path() +
+  theme(axis.text.x = element_text(angle= 25, hjust = 1))
 ```
 
+As more predictors are added, the estimate of population variance decreases and the coefficient of determinaiton (ammount of variance explained by the model) increases. Unadjuted R-squared will always increase as predictors are added to the model, the [adjusted R-squared](https://en.wikipedia.org/wiki/Coefficient_of_determination#Adjusted_R2) adds a penalty for n-predictors to compensate for that. 
 
+Note the rapid improvment in fit up to the model `lpsa ~ lcavol + lweight + svi`, perhaps that's a good place to stop adding more predictors.
 
-b)
-```{r}
-(res <- mod$res)
-(fit <- mod$fit)
-((cor(res,fit))^2)
-```
-Any where, but I probabky did some mistake.
+# 5.
 
-c)
-```{r}
-(mod2<-lm(taste~Acetic-1 + H2S + Lactic,cheddar))
-summary(mod2)
-```
-R-squared:  0.8877
-```{r}
-anova(mod,mod2)
-plot(mod)
-plot(mod2)
-```
-The mod medel have a better fit.
+```{r prostate2}
+m <- lm(lcavol ~ lpsa, prostate)
+m2 <- lm(lpsa ~ lcavol, prostate)
 
-d)
-```{r}
-(x<- model.matrix(~Acetic+H2S+Lactic,cheddar))
-(y <- cheddar$taste)
-qrx <- qr(x)
-(f <- t(qr.Q(qrx)) %*% y)
-backsolve(qr.R(qrx),f)
+ggplot(prostate, aes(lcavol, lpsa)) +
+  geom_point(alpha = .5) +
+  geom_line(aes(x = predict(m), color = "lcavol ~ lpsa")) +
+  geom_line(aes(y = predict(m2), color = "lpsa ~ lcavol")) +
+  geom_point(aes(y = 2.48, x = 1.36), shape = 1, size = 10)
 ```
 
+Algebra not showm but you can calculate the intesection if you solve for either `lcavol` or `lpsa` in the system of equations represented by the model coefficients.
 
-7)
+# 6.
 
-```{r}
-
-data(wafer)
-head(wafer)
-mod3<-lm(resist ~.,wafer)
-summary(mod3)
+```{r cheddar}
+data("cheddar")
+skim(cheddar)
 ```
 
-a)
-```{r}
-(x<- model.matrix(~x1+x2+x3+x4,wafer))
+## a.
 
+```{r cheddar_a}
+m <- lm(taste ~ ., cheddar)
+sumary(m)
 ```
-b)
-```{r}
+
+## b.
+
+```{r cheddar_b}
+cor(m$fitted.values, cheddar$taste)^2
+```
+
+R-Squared, the coeffecient of determination or percentage of variance explained
+
+## c. 
+
+```{r cheddar_c}
+m2 <- update(m, . ~ -1 + .)
+cor(m2$fitted.values, cheddar$taste)^2
+```
+
+## d.
+
+```{r cheddar_d}
+m_mat <- model.matrix(m)
+
+qr_decomp <- qr(m_mat)
+
+backsolve(
+  qr.R(qr_decomp), # upper-right
+  t(qr.Q(qr_decomp)) %*% cheddar$taste
+)
+```
+
+# 7.
+
+```{r wafer}
+data("wafer")
+skim(wafer)
+m <- lm(resist ~ ., wafer)
+```
+
+## a.
+
+```{r wafer_a}
+x <- model.matrix(m)
+x
+```
+
+As [dummy variables](https://en.wikipedia.org/wiki/Dummy_variable_(statistics)), 1s and 0s.
+
+## b.
+
+```{r wafer_b}
 cor(x)
-
 ```
-c)
+
+The intercept is constant and has no variance, so `cor()` throws a `NA` back.
+
 ```{r}
-```
-d)
-```{r}
-mod4<-lm(resist ~ x1+x2+x3,wafer)
-summary(mod3)
-summary(mod4)
-```
-The SE remained the same bur the regression coefficient decrease without x4.
-
-e)
-```{r}
+sd(x[,1])
+cor(x[,1], x[,1])
 ```
 
+## c.
 
-8)
-```{r}
-data(truck)
-head(truck)
-truck$B <- sapply(truck$B, function(x) ifelse(x=="-" ,-1,1))
-truck$C <- sapply(truck$C, function(x) ifelse(x=="-" ,-1,1))
-truck$D <- sapply(truck$D, function(x) ifelse(x=="-" ,-1,1))
-truck$E <- sapply(truck$E, function(x) ifelse(x=="-" ,-1,1))
-truck$O <- sapply(truck$O, function(x) ifelse(x=="-" ,-1,1))
+```{r wafer_c}
+sumary(m)
 ```
 
-a)
-```{r}
-(mod5<-lm(height~.,truck))
-```
-The coefficients are exactly the same.
+Resistivity will increase by 26 unknown units. The SI unit of resistivity are ohm-meter.[Wikipedia](https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity)
 
-b)
-```{r}
-(mod6<-lm(height~B+C+D+E,truck))
-(x<-model.matrix(~.,truck))
-(x2<-model.matrix(~B+C+D+E,truck))
+## d. 
+
+```{r wafer_d}
+m2 <- update(m, . ~ . - x4)
+sumary(m)
+sumary(m2)
 ```
 
-c)
-```{r}
-truck$A<-sum(truck$B+truck$C+truck$D+truck$E)
-(mod6<-lm(height~.,truck))
-```
-No, the coefficients of the new predictor A do not appear because are 0.
+The coefficient estimates are idential but everything else is differnt. There is more estimated variance without `x4` in the model so the `t.values` get closer to zero and the `p.values` increase slightly. None of these changes impact the inferences from the model.
 
-d)
-```{r}
-(x <- model.matrix( ~ B + C + D + E + O,truck))
-(y <- truck$height)
-(xtxi <- solve(t(x) %*% x))
-```
+## e.
 
-e)
-```{r}
-xtxi %*% t(x) %*% y
+The corrlations matrix shows that none of the predictors are correlated, so removing `x4` has no impact on the value estimates for the remaining predictors.
 
+
+# 8. 
+
+```{r truck}
+data("truck")
+skim(truck)
+
+truck %<>% mutate_if(is.factor, ~ ifelse(. == "-", -1, 1))
 ```
 
-f)
-```{r}
-qr.coef(qr(x),y)
+
+## a.
+
+```{r truck_a}
+m <- lm(height ~ ., truck)
+sumary(m)
 ```
+
+## b.
+
+```{r truck_b}
+m2 <- update(m, . ~ . -O)
+sumary(m2)
+```
+
+The coefficients are identical, because there is no correlation between predictors, `cor(model.matrix(m))` shows us that.
+
+## c. 
+
+```{r truck_c}
+
+truck %<>% 
+  rowwise() %>% 
+  mutate(A = sum(B, C, D, O))
+
+m3 <- update(m, . ~ . + A)
+sumary(m3)
+```
+
+`A` is not present becuse it is a linear combination the other predictors. Because the model realizes it can't identify all of the predictors it warns us and drops the last predictor listed in the formula, until the model becomes identifiable. In this case `A` gets cut, but `update(m, . ~ A + .) %>% sumary()` would drop `O`.
+
+## d.
+
+```{r truck_d, error=TRUE}
+x <- model.matrix(m3)
+solve(t(x) %*% x)
+```
+
+Singularities are a real problem.
+
+## e.
+
+```{r truck_e}
+qr_decomp <- qr(x)
+backsolve(
+  qr.R(qr_decomp), # upper-right
+  t(qr.Q(qr_decomp)) %*% truck$height
+)
+```
+
+No, most of the estimates are insanely large, which indicate a problem.
+
+## f. 
+
+```{r truck_f}
+qr.coef(qr_decomp, truck$height)
+```
+
